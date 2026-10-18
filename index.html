@@ -553,9 +553,9 @@ setLang(LANG);
 
 // ===== ระดับความยาก (ปรับสมดุลจากการจำลอง 4,000 เกม/ชั้น) =====
 const DIFFS={
-  easy:  {name:'ง่าย', icon:'🌱',bhp:[18,25,34,40,46,54],batk:[0,0,0,1,1,1],bdef:[0,0,0,0,0,1],php:f=>28+6*f,en0:5,ca:4,cd:3,blk:2,atk:1,time:3000,desc:'บอสเลือดน้อย ตีเบา · เวลาตอบ +3 วิ · เหมาะกับการฝึกศัพท์'},
-  normal:{name:'ปกติ',icon:'⚔️',bhp:[22,31,41,48,54,60],batk:[0,1,1,1,2,2],bdef:[0,0,0,1,1,1],php:f=>24+5*f,en0:3,ca:5,cd:4,blk:1,atk:0,time:2000,desc:'สมดุล · เวลาตอบ +2 วิ'},
-  hard:  {name:'ยาก', icon:'💀',bhp:[24,32,41,47,53,60],batk:[0,1,2,3,3,4],bdef:[0,1,1,1,1,1],php:f=>22+4*f,en0:2,ca:6,cd:5,blk:1,atk:0,time:0,desc:'สำหรับผู้กล้า · ต้องใช้ร้านค้าและอาวุธให้คุ้ม'}};
+  easy:  {name:'ง่าย', icon:'🌱',bhp:[18,25,34,40,46,54],batk:[-1,-1,-1,-1,-1,-1],bdef:[0,0,0,0,0,1],php:f=>28+6*f,en0:5,ca:4,cd:3,blk:2,atk:1,time:3000,desc:'บอสเลือดน้อย ตีเบา · เวลาตอบ +3 วิ · เหมาะกับการฝึกศัพท์'},
+  normal:{name:'ปกติ',icon:'⚔️',bhp:[22,31,41,48,54,60],batk:[0,0,0,0,0,0],bdef:[0,0,0,1,1,1],php:f=>24+5*f,en0:3,ca:5,cd:4,blk:1,atk:0,time:2000,desc:'สมดุล · เวลาตอบ +2 วิ'},
+  hard:  {name:'ยาก', icon:'💀',bhp:[24,32,41,47,53,60],batk:[1,2,3,4,4,5],bdef:[0,1,1,1,1,1],php:f=>22+4*f,en0:2,ca:6,cd:5,blk:1,atk:0,time:0,desc:'สำหรับผู้กล้า · ต้องใช้ร้านค้าและอาวุธให้คุ้ม'}};
 let DK='normal';
 const DF=()=>DIFFS[DK];
 // ===== ⚡ ระบบพลังงานสกิล =====
@@ -1012,7 +1012,7 @@ function showBossBuffInfo(){
         <h2 style="margin:0;text-align:center;font-size:19px;color:#8b0000">ข้อมูลบอส [Lv.${F.lv}]</h2>
         <div style="text-align:center;font-size:14px;font-weight:bold;color:#3a2a10;margin-top:2px">${F.n} (ชั้น ${G.f+1}: ${F.t})</div>
         <div style="text-align:center;font-size:11.5px;color:#8a4b16;font-weight:bold;background:#fff5e6;border:1px dashed #d4af37;border-radius:6px;padding:4px;margin:4px 0">
-            ❤️ HP: ${F.h} ${F.atk ? `| ⚔️ โจมตี +${F.atk}` : ''} ${F.def ? `| 🛡️ เกราะ +${F.def}` : ''}
+            ❤️ HP: ${F.h} ${F.atk ? `| ⚔️ โจมตี ${F.atk>0?'+':''}${F.atk}` : ''} ${F.def ? `| 🛡️ เกราะ +${F.def}` : ''}
         </div>
         <div style="background:#fff;border:1.5px solid #8b0000;border-radius:8px;padding:10px 12px;margin:8px 0;text-align:left">
             <div style="font-size:14px;font-weight:bold;color:#b22222;margin-bottom:4px">🔥 ${F.buff.name}</div>
@@ -1853,7 +1853,7 @@ const BOSS_SPELLS={
     rule:()=>[`2 ข้อติด ไม่มีคำแปลภาษาไทยช่วย`,`ถูกครบ 2 ข้อ: บอส −4 HP และ <b>ผนึกบอส</b> (การโจมตีครั้งถัดไปของบอสเป็น 0)`,`ข้อละผิด: โดน −${sc(4)} HP`,`⚠️ เลือดบอสต่ำกว่าครึ่ง: ร่ายถี่ขึ้นทุก 2 เทิร์น`],
     result:async ok=>{const g=ok.filter(Boolean).length,b=ok.length-g;if(g===ok.length){await bossHit(4);G.stun=1;showBanner('🔒 บอสถูกผนึก!','g')}if(b)await heroHit(sc(4)*b)}}
 };
-const spellEvery=(id)=>id==='king'&&G.bh<=P[G.f].h/2?2:BOSS_SPELLS[id].every;
+const spellEvery=(id)=>{const b=id==='king'&&G.bh<=P[G.f].h/2?2:BOSS_SPELLS[id].every;return DK==='hard'?Math.max(2,b-1):b};
 async function bossHit(n){await atk(true,n,()=>{G.bh-=n;hud()})}
 async function heroHit(n){await atk(false,n,()=>{G.hp-=n;hud()})}
 function bossSpell(id){
@@ -2187,9 +2187,9 @@ $('#roll').onclick=async()=>{
         extraDieMsg += ` (🛡️เกราะบอส +${F.def})`;
     }
     // ระดับบอส: บอสโจมตีมีพลังโจมตีตามระดับชั้น
-    if(!ap && F.atk > 0) {
-        sa += F.atk;
-        extraDieMsg += ` (⚔️พลังบอส +${F.atk})`;
+    if(!ap && F.atk) {
+        sa = Math.max(0, sa + F.atk);
+        extraDieMsg += ` (⚔️พลังบอส ${F.atk>0?'+':''}${F.atk})`;
     }
 
     // ธนู / โบนัสเจาะเกราะ: ลดแต้มป้องกันของบอส
